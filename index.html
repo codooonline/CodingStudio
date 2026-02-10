@@ -1,24 +1,21 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Codoo</title>
 
 <style>
-* {
-  box-sizing: border-box;
-  font-family: Consolas, monospace;
-}
 body {
   margin: 0;
   background: #0f0f0f;
   color: #eaeaea;
   height: 100vh;
   overflow: hidden;
+  font-family: system-ui, sans-serif;
 }
 
-/* ---------- INTRO ---------- */
+/* INTRO */
 #intro {
   position: fixed;
   inset: 0;
@@ -27,56 +24,48 @@ body {
   align-items: center;
   justify-content: center;
   z-index: 999;
-  animation: introFade 3.5s forwards;
+  animation: introFade 3.2s forwards;
 }
-
 #intro h1 {
   font-size: 48px;
+  font-family: Consolas, monospace;
 }
-
-.co { color: #00e5ff; }
-.doo { color: #00ff88; }
+.co { color: white; }
+.doo { color: #00e5ff; }
 
 @keyframes introFade {
-  0% { opacity: 1; }
-  80% { opacity: 1; }
+  0%,80% { opacity: 1; }
   100% { opacity: 0; pointer-events: none; }
 }
 
-/* ---------- APP ---------- */
+/* APP */
 #app {
   height: 100vh;
   display: flex;
   flex-direction: column;
   transform: translateY(-100vh);
   animation: dropIn 0.25s ease-out forwards;
-  animation-delay: 3.2s;
+  animation-delay: 3s;
 }
+@keyframes dropIn { to { transform: translateY(0); } }
 
-@keyframes dropIn {
-  to { transform: translateY(0); }
-}
-
-/* ---------- TOP BAR ---------- */
+/* TOP BAR */
 .topbar {
   display: flex;
   align-items: center;
   padding: 10px 14px;
   border-bottom: 1px solid #222;
-  background: #0f0f0f;
 }
-
 .logo {
   font-size: 18px;
   font-weight: bold;
+  font-family: Consolas, monospace;
 }
-
 .actions {
   margin-left: auto;
   display: flex;
-  gap: 10px;
+  gap: 8px;
 }
-
 .btn {
   background: #1a1a1a;
   color: #eaeaea;
@@ -84,76 +73,45 @@ body {
   padding: 6px 12px;
   cursor: pointer;
 }
+.btn:hover { background: #222; }
 
-.btn:hover {
-  background: #222;
-}
-
-/* ---------- EDITOR ---------- */
-.editor {
+/* EDITOR */
+#editor {
   flex: 1;
-  background: #1b1b1b;
 }
 
-textarea {
-  width: 100%;
-  height: 100%;
-  background: transparent;
-  color: #d4d4d4;
-  border: none;
-  outline: none;
-  resize: none;
-  padding: 16px;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-/* ---------- RUN PANEL ---------- */
-.run-panel {
-  height: 35%;
-  min-height: 120px;
-  max-height: 80%;
+/* RUN PANEL */
+#runPanel {
+  position: fixed;
+  inset: 0;
+  background: white;
   display: none;
   flex-direction: column;
-  background: #fff;
+  z-index: 20;
 }
-
-.run-drag {
-  height: 14px;
-  background: #ccc;
-  cursor: ns-resize;
-  touch-action: none;
-}
-
 .run-header {
   background: #111;
   color: white;
-  padding: 6px 10px;
+  padding: 8px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
 }
-
 iframe {
   flex: 1;
   border: none;
 }
-
-/* MOBILE */
-@media (max-width: 600px) {
-  textarea { font-size: 13px; }
-}
 </style>
+
+<!-- Monaco Loader -->
+<script src="https://unpkg.com/monaco-editor@0.45.0/min/vs/loader.js"></script>
 </head>
 
 <body>
 
-<!-- INTRO -->
 <div id="intro">
   <h1><span class="co">Co</span><span class="doo">doo</span></h1>
 </div>
 
-<!-- APP -->
 <div id="app">
 
   <div class="topbar">
@@ -166,100 +124,64 @@ iframe {
     </div>
   </div>
 
-  <div class="editor">
-<textarea id="code">
-<!DOCTYPE html>
-<html>
-<body style="background:#111;color:white">
-<h1>Hello Codoo</h1>
-
-<script>
-document.body.onclick = () => alert("This is real JS running 👀");
-</script>
-
-</body>
-</html>
-</textarea>
-  </div>
-
-  <div class="run-panel" id="runPanel">
-    <div class="run-drag" id="dragBar"></div>
-    <div class="run-header">
-      <span>Output</span>
-      <button class="btn" onclick="closeRun()">Close</button>
-    </div>
-    <iframe id="output"></iframe>
-  </div>
+  <div id="editor"></div>
 
 </div>
 
+<div id="runPanel">
+  <div class="run-header">
+    <span>Output</span>
+    <div>
+      <button class="btn" onclick="document.getElementById('runPanel').requestFullscreen()">Fullscreen</button>
+      <button class="btn" onclick="closeRun()">Close</button>
+    </div>
+  </div>
+  <iframe id="output"></iframe>
+</div>
+
 <script>
-const runPanel = document.getElementById("runPanel");
-const dragBar = document.getElementById("dragBar");
-let dragging = false;
+let editor;
 
-function runCode() {
-  runPanel.style.display = "flex";
-  document.getElementById("output").srcdoc =
-    document.getElementById("code").value;
-}
+require.config({ paths: { vs: 'https://unpkg.com/monaco-editor@0.45.0/min/vs' }});
+require(['vs/editor/editor.main'], function () {
 
-function closeRun() {
-  runPanel.style.display = "none";
-}
-
-function copyCode() {
-  navigator.clipboard.writeText(
-    document.getElementById("code").value
-  );
-}
-
-/* FIXED DRAG LOGIC */
-dragBar.addEventListener("pointerdown", e => {
-  dragging = true;
-  dragBar.setPointerCapture(e.pointerId);
-});
-
-window.addEventListener("pointerup", () => dragging = false);
-
-window.addEventListener("pointermove", e => {
-  if (!dragging) return;
-
-  const viewport = window.innerHeight;
-  let newHeight = viewport - e.clientY;
-
-  const min = 120;
-  const max = viewport * 0.8;
-
-  if (newHeight < min) newHeight = min;
-  if (newHeight > max) newHeight = max;
-
-  runPanel.style.height = newHeight + "px";
-});
-
-/* SIMPLE EMMET */
-document.getElementById("code").addEventListener("keydown", e => {
-  if (e.key === "Tab") {
-    e.preventDefault();
-    const a = e.target;
-    if (a.value.endsWith("!")) {
-      a.value = a.value.replace(/!$/,
-`<!DOCTYPE html>
+  editor = monaco.editor.create(document.getElementById('editor'), {
+    value: `<!DOCTYPE html>
 <html>
-<head>
-<meta charset="UTF-8">
-<title>Codoo</title>
-</head>
-<body>
+<body style="background:#111;color:white">
+
+<h1>Codoo</h1>
+<input placeholder="Type here">
+
+<script>
+document.querySelector("input").oninput =
+  e => console.log(e.target.value);
+</script>
 
 </body>
-</html>`);
-    }
-  }
+</html>`,
+    language: 'html',
+    theme: 'vs-dark',
+    automaticLayout: true,
+    fontSize: 14,
+    minimap: { enabled: false },
+    wordWrap: 'on'
+  });
+
 });
+
+/* RUN */
+function runCode() {
+  document.getElementById('runPanel').style.display = 'flex';
+  document.getElementById('output').srcdoc = editor.getValue();
+}
+function closeRun() {
+  document.getElementById('runPanel').style.display = 'none';
+}
+function copyCode() {
+  navigator.clipboard.writeText(editor.getValue());
+}
 </script>
 
 </body>
 </html>
-
-
